@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using DataView;
-using ExCSS;
 using MathNet.Numerics.LinearAlgebra;
 using Registration.ApplicationCode.DataClasses.Data;
 using Registration.ApplicationCode.Other;
 using Registration.ApplicationCode.Other.FCConfiguration;
-using Registration.ApplicationCode.RegistrationLaunchers;
 
 namespace Registration.ApplicationCode.FeatureComputers;
 
 public class FeatureComputerISOCurvature : AFeatureComputer
 {
     private double BORDER_VALUE;
+
+    private double artificialSpacingX, artificialSpacingY, artificialSpacingZ;
 
     public override int NumberOfFeatures => 2;
     
@@ -30,6 +28,13 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     public override void ComputeFeatureVector(AData d, Point3D p, double[] array, int startIndex)
     {
         CheckArrayDimensions(array, startIndex);
+
+
+        //Ensure the spacing is at least as large as the proximity spacing to guarantee that there are not interpolated points but also points are reasonably spaced
+        this.artificialSpacingX = d.XSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.XSpacing) * d.XSpacing : d.XSpacing;
+        this.artificialSpacingY = d.YSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.YSpacing) * d.YSpacing : d.YSpacing;
+        this.artificialSpacingZ = d.ZSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.ZSpacing) * d.ZSpacing : d.ZSpacing;
+
         double spreadParameter = CalculateSpreadParameter();
 
         Point3D nearestGridPoint = new Point3D(
@@ -63,7 +68,7 @@ public class FeatureComputerISOCurvature : AFeatureComputer
 
     private double CalculateSpreadParameter()
     {
-        return -Math.Log(BORDER_VALUE) / Constants.PROXIMITY_RADIUS;
+        return -Math.Log(BORDER_VALUE) / (Constants.PROXIMITY_RADIUS * Constants.PROXIMITY_RADIUS);
     }
 
     private Matrix<double> ConstructAdjointMatrix(Matrix<double> hessianMatrix)
@@ -126,14 +131,10 @@ public class FeatureComputerISOCurvature : AFeatureComputer
                 1000
             );
 
-        double gaussianCurvature = adjointHessian.LeftMultiply(functionGradient).DotProduct(functionGradient) /
-                                   Math.Pow(functionGradientNorm, 4); /* Gaussian curvature */
+        double gaussianCurvature = adjointHessian.LeftMultiply(functionGradient).DotProduct(functionGradient) / Math.Pow(functionGradientNorm, 4); /* Gaussian curvature */
         double meanCurvature = (hessianMatrix.LeftMultiply(functionGradient).DotProduct(functionGradient) -
              Math.Pow(functionGradientNorm, 2) * hessianMatrix.Trace()) /
             (2 * Math.Pow(functionGradientNorm, 3)); /* Mean curvature */
-
-        //meanCurvature = Math.Abs(meanCurvature);
-        //gaussianCurvature = Math.Abs(gaussianCurvature);
 
         return new Curvature(
             meanCurvature,
@@ -165,6 +166,8 @@ public class FeatureComputerISOCurvature : AFeatureComputer
                 surroundingPoints[i].Z - centeredPoint.Z,
                 spreadParameter
             );
+
+
 
             qMatrixT[0, i] = Math.Pow(surroundingPoints[i].X, 2);
             qMatrixT[1, i] = Math.Pow(surroundingPoints[i].Y, 2);
@@ -217,18 +220,23 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     {
         return Math.Exp(-spreadParameter * (x * x + y * y + z * z));
     }
-    
+
     private List<Point3D> CalculateSurroundingPoints(Point3D point, AData d)
     {
         List<Point3D> surroundingPoints = new List<Point3D>();
 
-        double r = Constants.PROXIMITY_RADIUS;
-        double s = Constants.PROXIMITY_SPACING;
+        int desiredShiftX = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingX);
+        int desiredShiftY = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingY);
+        int desiredShiftZ = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingZ);
 
-        for (double x = -r; x <= r; x += s)
-            for (double y = -r; y <= r; y += s)
-                for (double z = -r; z <= r; z += s)
-                    surroundingPoints.Add(new Point3D(x, y, z));
+        int minSpacingMultiplierX = MinSpacingMulitplier(point.X, artificialSpacingX, desiredShiftX), maxSpacingMultiplierX = MaxSpacingMultiplier(point.X, d.MaxValueX, artificialSpacingX, desiredShiftX);
+        int minSpacingMulitplierY = MinSpacingMulitplier(point.Y, artificialSpacingY, desiredShiftY), maxSpacingMultiplierY = MaxSpacingMultiplier(point.Y, d.MaxValueY, artificialSpacingY, desiredShiftY);
+        int minSpacingMulitplierZ = MinSpacingMulitplier(point.Z, artificialSpacingZ, desiredShiftZ), maxSpacingMultiplierZ = MaxSpacingMultiplier(point.Z, d.MaxValueZ, artificialSpacingZ, desiredShiftZ);
+
+        for (int x = -minSpacingMultiplierX; x <= maxSpacingMultiplierX; x++)
+            for (int y = -minSpacingMulitplierY; y <= maxSpacingMultiplierY; y++)
+                for (int z = -minSpacingMulitplierZ; z <= maxSpacingMultiplierZ; z++)
+                    surroundingPoints.Add(new Point3D(x * artificialSpacingX, y * artificialSpacingY, z * artificialSpacingZ));
 
         return surroundingPoints;
     }

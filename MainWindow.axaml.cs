@@ -25,7 +25,7 @@ public partial class MainWindow : Window
         
         var rl = new RegistrationLauncher();
         
-        var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Jatra/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Jatra/macroData.raw"));
+        var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Trup/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Trup/macroData.raw"));
         
         // rl.FeatureVarianceInDifferentRegions(dataObject, 20);
         
