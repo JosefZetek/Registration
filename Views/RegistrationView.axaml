@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Registration.Views"
+             x:Class="Registration.Views.RegistrationView">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnDefinitions="*">
+
+        <StackPanel
+            Orientation="Horizontal"
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="12">
+                <Image
+                    Source="{SvgImage /Assets/Images/cpu.svg}"
+                    Width="40"
+                    Height="40"
+                    Margin="0,0,8,0"/>
+                <TextBlock
+                    Text="Registration"
+                    VerticalAlignment="Center"   
+                    FontStyle="Italic"
+                    FontSize="26"
+                    FontWeight="SemiLight"
+                    Padding="10"/>
+        </StackPanel>
+
+        <StackPanel
+            Grid.Column="0"
+            Grid.Row="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Horizontal"
+            Margin="12">
+
+            <views:IndicatorView
+                x:Name="IndicatorMicroMeta"
+                Text="Micro Meta Data"
+                Opacity="0.5"/>
+
+            <views:IndicatorView
+                x:Name="IndicatorMicroRaw"
+                Text="Micro Raw Data"
+                Opacity="0.5"/>
+
+            <views:IndicatorView
+                x:Name="IndicatorMacroMeta"
+                Text="Macro Meta Data"
+                Opacity="0.5"/>
+
+            <views:IndicatorView
+                x:Name="IndicatorMacroRaw"
+                Text="Macro Meta Data"
+                Opacity="0.5"/>
+
+        </StackPanel>
+            
+
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="0"
+            Text="Micro Data"
+            FontStyle="Italic"
+            FontSize="24"
+            FontWeight="Light"
+            Margin="12"/>
+
+        <StackPanel
+            Grid.Row="3"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+        Orientation="Horizontal">
+
+            <views:ButtonView
+                Text="Select Micro Meta Data"
+                Icon="{SvgImage /Assets/Images/file-mhd.svg}"
+                Click="OnSelectMicroMetaButton_Click"/>
+
+            <views:ButtonView
+                Text="Select Micro Raw Data"
+                Icon="{SvgImage /Assets/Images/file-raw.svg}"
+                Click="OnSelectMicroRawButton_Click"/>
+
+        </StackPanel>
+
+
+        <Separator
+                Grid.Row="4"
+                Margin="10"/>
+
+        <TextBlock
+            Grid.Row="5"
+            Grid.Column="0"
+            Text="Macro Data"
+            FontStyle="Italic"
+            FontSize="24"
+            FontWeight="Light"
+            Margin="12"/>
+
+        <StackPanel
+            Grid.Row="6"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Horizontal">
+
+            <views:ButtonView
+                Text="Select Macro Meta Data"
+                Icon="{SvgImage /Assets/Images/file-mhd.svg}"
+                Click="OnSelectMacroMetaButton_Click"/>
+
+            <views:ButtonView
+                Text="Select Macro Raw Data"
+                Icon="{SvgImage /Assets/Images/file-raw.svg}"
+                Click="OnSelectMacroRawButton_Click"/>
+
+        </StackPanel>
+
+        <Separator
+                Grid.Row="7"
+                Margin="10"/>
+
+        <StackPanel
+            Grid.Row="8"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+        Orientation="Horizontal">
+
+            <views:ButtonView
+                Text="Run Registration"
+                Icon="{SvgImage /Assets/Images/run.svg}"
+                Click="OnRunButton_Click"/>
+
+            <views:ButtonView
+                Text="Clear Selection"
+                Icon="{SvgImage /Assets/Images/clear.svg}"
+                Click="OnClearButton_Click"/>
+
+        </StackPanel> 
+    </Grid>
+</UserControl>

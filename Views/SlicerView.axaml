@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Registration.Views.SlicerView">
+    
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
+        <!-- Control Section -->
+        <Grid Grid.Row="0" RowDefinitions="*,*" ColumnDefinitions="*,Auto" RowSpacing="3" ColumnSpacing="10" VerticalAlignment="Center">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Slice Thickness" TextAlignment="Center" FontStyle="Italic" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,0,5"/>
+            <Slider Grid.Row="1" Grid.Column="0" x:Name="SliceSlider"
+                    ValueChanged="OnSliderValue_Changed"
+                    VerticalAlignment="Center"
+                    Minimum="0"
+                    Maximum="1"
+                    Value="0.5"/>
+            
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="Axis" FontWeight="Bold" VerticalAlignment="Center" TextAlignment="Center"/>
+            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="AxisComboBox" Width="100" VerticalAlignment="Center" SelectionChanged="OnAxisSelection_Changed" SelectedIndex="0">
+                <ComboBoxItem Content="X"/>
+                <ComboBoxItem Content="Y"/>
+                <ComboBoxItem Content="Z"/>
+            </ComboBox>
+        </Grid>
+        
+        <Image Grid.Row="1" x:Name="SliceImage" Stretch="Uniform"/>
+    </Grid>
+</UserControl>

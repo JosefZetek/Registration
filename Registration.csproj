@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc6.1" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\logo.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Images\logo.svg" />
+    <AvaloniaResource Include="Assets\Images\logo.svg" />
+    <None Remove="Assets\Images\cpu.svg" />
+    <AvaloniaResource Include="Assets\Images\cpu.svg" />
+    <None Remove="Assets\Images\chart-line.svg" />
+    <AvaloniaResource Include="Assets\Images\chart-line.svg" />
+    <None Remove="Assets\Images\cards.svg" />
+    <AvaloniaResource Include="Assets\Images\cards.svg" />
+    <None Remove="Assets\Images\arrows-in-simple.svg" />
+    <AvaloniaResource Include="Assets\Images\arrows-in-simple.svg" />
+    <None Remove="Assets\Images\file-mhd.svg" />
+    <AvaloniaResource Include="Assets\Images\file-mhd.svg" />
+    <None Remove="Assets\Images\database.svg" />
+    <AvaloniaResource Include="Assets\Images\database.svg" />
+    <None Remove="Assets\Images\play.svg" />
+    <AvaloniaResource Include="Assets\Images\play.svg" />
+    <None Remove="Assets\Images\run.svg" />
+    <AvaloniaResource Include="Assets\Images\run.svg" />
+    <None Remove="Assets\Images\checkmark.svg" />
+    <AvaloniaResource Include="Assets\Images\checkmark.svg" />
+    <None Remove="Assets\Images\wrongmark.svg" />
+    <None Remove="Assets\Images\file-raw.svg" />
+    <AvaloniaResource Include="Assets\Images\file-raw.svg" />
+    <None Remove="Assets\Images\clear.svg" />
+    <AvaloniaResource Include="Assets\Images\clear.svg" />
+    <None Remove="Assets\Images\transformation.svg" />
+    <AvaloniaResource Include="Assets\Images\transformation.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\MainView.axaml.cs">
+      <DependentUpon>MainWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\SlicerView.axaml.cs">
+      <DependentUpon>SlicerView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\RegistrationView.axaml.cs">
+      <DependentUpon>ChartView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\Buttons\ButtonView.axaml.cs">
+      <DependentUpon>AlignmentView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\Controls\ButtonView.axaml.cs">
+      <DependentUpon>ChartView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\Controls\IndicatorView.axaml.cs">
+      <DependentUpon>IndicatorView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\SlicerSetupView.axaml.cs">
+      <DependentUpon>SlicerSetupView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\ProgressView.axaml.cs">
+      <DependentUpon>ProgressView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

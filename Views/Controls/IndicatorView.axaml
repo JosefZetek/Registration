@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="Registration.Views.IndicatorView">
+
+    <Grid x:Name="Indicator_Element" RowDefinitions="*" ColumnDefinitions="Auto,Auto" Margin="10">
+
+        <TextBlock
+            x:Name="Indicator_Text"
+            Grid.Row="0"
+            Grid.Column="0"
+            FontStyle="Italic"
+            FontSize="12"
+            FontWeight="Bold"
+            VerticalAlignment="Center"
+            Padding="10"
+            />
+
+		<Grid
+            Grid.Row="0"
+            Grid.Column="1"
+            Width="48"
+            Height="48"
+            Margin="10">
+            <!-- Čárkovaná elipsa -->
+            <Path
+                Stroke="#80000000"
+                StrokeThickness="2"
+                StrokeDashArray="4,2"
+                Stretch="Fill">
+                <Path.Data>
+                    <EllipseGeometry
+                        Center="50,50"
+                        RadiusX="48"
+                        RadiusY="48" />
+                </Path.Data>
+            </Path>
+
+            <!-- Ikona uprostřed -->
+            <Image
+                x:Name="Indicator_Icon"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="48"
+                Height="48" />
+        </Grid>
+    </Grid>
+</UserControl>

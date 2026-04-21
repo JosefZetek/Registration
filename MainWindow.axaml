@@ -1,0 +1,80 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Registration.MainWindow"
+        Title="Registration">
+        
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
+                
+                <Border x:Name="Sidebar"
+                        Grid.Column="0"
+                        Width="300"
+                        MinWidth="0"
+                        Margin="12"
+                        CornerRadius="12"
+                        Background="#CCF8F8FA"
+                        Padding="12"
+                        HorizontalAlignment="Left"
+                        ClipToBounds="True">
+                        <Border.Transitions>
+                                <Transitions>
+                                        <DoubleTransition Property="Width" Duration="0:0:0.25"/>
+                                </Transitions>
+                        </Border.Transitions>
+                        
+                        <StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="6">
+                                        <Border Width="55" Height="55" CornerRadius="8" Background="White" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Image Source="{SvgImage /Assets/Images/logo.svg}" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel>
+                                                <TextBlock Text="3D Registration" FontWeight="Bold" FontSize="16"/>
+                                                <TextBlock Text="Faculty of Applied Sciences" FontSize="12" FontWeight="SemiBold" Foreground="#D5A619"/>
+                                                <TextBlock Text="University of West Bohemia" FontSize="12" FontWeight="SemiBold" Foreground="#D5A619"/>
+                                        </StackPanel>
+                                </StackPanel>
+
+                                <Separator Margin="8"/>
+                                
+                                <StackPanel Spacing="5">
+                                        <Button Click="OnRegistration_Click" HorizontalAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{SvgImage /Assets/Images/cpu.svg} " Width="16" Height="16" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Registration" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                        </Button>
+                                        
+                                        
+                                        <Button Click="OnSlicer_Click" HorizontalAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{SvgImage /Assets/Images/cards.svg} " Width="16" Height="16" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Slicer" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                        </Button>
+                                        
+                                        <Button Click="OnAlignment_Click" HorizontalAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{SvgImage /Assets/Images/arrows-in-simple.svg} " Width="16" Height="16" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Alignment Viewer" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                        </Button>
+                                        
+                                        <Button Click="OnExperiment_Click" HorizontalAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{SvgImage /Assets/Images/chart-line.svg} " Width="16" Height="16" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Experiment Launcher" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                        </Button>
+                                </StackPanel>
+                                
+
+                        </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Margin="12" CornerRadius="12" Background="White" Padding="16">
+                        <ContentControl x:Name="MainContent"/>
+                </Border>
+        </Grid>
+</Window>

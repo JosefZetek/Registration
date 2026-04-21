@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Registration.Views"
+             x:Class="Registration.Views.SlicerSetupView">
+    
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnDefinitions="*">
+        <StackPanel
+            Orientation="Horizontal"
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="12">
+                <Image
+                    Source="{SvgImage /Assets/Images/cards.svg}"
+                    Width="40"
+                    Height="40"
+                    Margin="0,0,8,0"/>
+                <TextBlock
+                    Text="Slicer"
+                    VerticalAlignment="Center"   
+                    FontStyle="Italic"
+                    FontSize="26"
+                    FontWeight="SemiLight"
+                    Padding="10"/>
+        </StackPanel>
+
+        <StackPanel
+            Grid.Column="0"
+            Grid.Row="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Horizontal"
+            Margin="12">
+
+            <views:IndicatorView
+                x:Name="IndicatorMeta"
+                Text="Meta Data"
+                Opacity="0.5"/>
+
+            <views:IndicatorView
+                x:Name="IndicatorRaw"
+                Text="Raw Data"
+                Opacity="0.5"/>
+            
+        </StackPanel>
+            
+
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="0"
+            Text="Data Selection"
+            FontStyle="Italic"
+            FontSize="24"
+            FontWeight="Light"
+            Margin="12"/>
+
+        <StackPanel
+            Grid.Row="3"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+        Orientation="Horizontal">
+
+            <views:ButtonView
+                Text="Select Meta Data"
+                Icon="{SvgImage /Assets/Images/file-mhd.svg}"
+                Click="OnMetaButton_Click"/>
+
+            <views:ButtonView
+                Text="Select Raw Data"
+                Icon="{SvgImage /Assets/Images/file-raw.svg}"
+                Click="OnRawButton_Click"/>
+
+        </StackPanel>
+
+
+        <Separator
+                Grid.Row="4"
+                Margin="10"/>
+
+        <Grid
+            RowDefinitions="*"
+            ColumnDefinitions="Auto,*"
+            Grid.Row="5"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            RowSpacing="3">
+
+            <views:ButtonView
+                Grid.Row="0"
+                Grid.Column="0"
+                Text="Clear Selection"
+                Icon="{SvgImage /Assets/Images/clear.svg}"
+                Click="OnClearButton_Click"/>
+            
+            <views:ButtonView
+                Grid.Row="0"
+                Grid.Column="1"
+                VerticalAlignment="Top"
+                Text="Present Slicer"
+                Icon="{SvgImage /Assets/Images/cards.svg}"
+                Click="OnSliceButton_Click"/>
+
+        </Grid> 
+    </Grid>
+</UserControl>
