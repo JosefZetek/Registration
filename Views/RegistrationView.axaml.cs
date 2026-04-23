@@ -152,6 +152,7 @@ namespace Registration.Views
             VolumetricData macroData = new VolumetricData(macroDataPath);
 
             Transform3D transformation = registrationLauncher.RunRegistration(microData, macroData);
+            Console.WriteLine(transformation);
             _mainContent.Content = new SlicerView(_mainContent, microData, macroData, transformation);
         }
 

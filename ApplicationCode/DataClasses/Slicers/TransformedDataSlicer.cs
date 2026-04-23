@@ -31,7 +31,8 @@ public class TransformedDataSlicer: ADataSlicer
     private int NormalizeValue(double value)
     {
         double normalizedValue = (value - this.macroData.MinValue) / (this.macroData.MaxValue - this.macroData.MinValue);
-        return (int)(normalizedValue * 255);
+        int result = (int)(normalizedValue * 255);
+        return Math.Max(0, Math.Min(255, result));
     }
 
     public override Color[][] Cut(double t, int axis, CutResolution resolution)
