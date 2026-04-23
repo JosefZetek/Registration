@@ -9,31 +9,33 @@ namespace Registration.ApplicationCode.FeatureComputers;
 
 public class FeatureComputerISOCurvature : AFeatureComputer
 {
-    private double BORDER_VALUE;
+    private double borderValue;
 
-    private double artificialSpacingX, artificialSpacingY, artificialSpacingZ;
+    private double artificialSpacingX, artificialSpacingY, artificialSpacingZ, maxArtificialSpacing;
 
     public override int NumberOfFeatures => 2;
     
     /// <summary>
     /// Feature Computer computing Gaussian and Mean Curvature based on ISO-Surface approximation.
     /// </summary>
-    /// <param name="BORDER_VALUE">Kernel output at point distanced RADIUS units from inspected point</param>
+    /// <param name="borderValue">Kernel output at point distanced RADIUS units from inspected point</param>
     /// <param name="RADIUS">Number of units distanced from center at which kernel function drops to 'borderPercentage'</param>
-    public FeatureComputerISOCurvature(double BORDER_VALUE, int RADIUS)
+    public FeatureComputerISOCurvature(double borderValue, int RADIUS)
     {
-        this.BORDER_VALUE = BORDER_VALUE;
+        this.borderValue = borderValue;
     }
 
     public override void ComputeFeatureVector(AData d, Point3D p, double[] array, int startIndex)
     {
         CheckArrayDimensions(array, startIndex);
-
-
+        
         //Ensure the spacing is at least as large as the proximity spacing to guarantee that there are not interpolated points but also points are reasonably spaced
         this.artificialSpacingX = d.XSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.XSpacing) * d.XSpacing : d.XSpacing;
         this.artificialSpacingY = d.YSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.YSpacing) * d.YSpacing : d.YSpacing;
         this.artificialSpacingZ = d.ZSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.ZSpacing) * d.ZSpacing : d.ZSpacing;
+        
+        //Calculate max spacing for later normalization
+        this.maxArtificialSpacing = Math.Max(artificialSpacingX, Math.Max(artificialSpacingY, artificialSpacingZ));
 
         double spreadParameter = CalculateSpreadParameter();
 
@@ -59,7 +61,7 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     {
         var config = new FCConfiguration();
         config.FeatureComputerType = FCType.CURVATURE_FEATURE_COMPUTER;
-        config.AddParameter("BorderPercentage", BORDER_VALUE);
+        config.AddParameter("BorderPercentage", borderValue);
         config.AddParameter("Radius", 0);
         config.AddParameter("Comment", "Curvature");
 
@@ -68,7 +70,7 @@ public class FeatureComputerISOCurvature : AFeatureComputer
 
     private double CalculateSpreadParameter()
     {
-        return -Math.Log(BORDER_VALUE) / (Constants.PROXIMITY_RADIUS * Constants.PROXIMITY_RADIUS);
+        return -Math.Log(borderValue) / (Constants.PROXIMITY_RADIUS * Constants.PROXIMITY_RADIUS);
     }
 
     private Matrix<double> ConstructAdjointMatrix(Matrix<double> hessianMatrix)
@@ -116,7 +118,7 @@ public class FeatureComputerISOCurvature : AFeatureComputer
 
     private Curvature ComputeCurvature(Point3D point, AData d, Point3D centerPoint, double spreadParameter)
     {
-        List<Point3D> surroundingPoints = CalculateSurroundingPoints(point, d);
+        List<Point3D> surroundingPoints = CalculateSurroundingPoints(centerPoint, d);
         Vector<double> coeficients = GetApproximationEquation(surroundingPoints, point, centerPoint, d, spreadParameter);
 
         Matrix<double> hessianMatrix = ConstructHessianMatrix(coeficients);
@@ -137,8 +139,8 @@ public class FeatureComputerISOCurvature : AFeatureComputer
             (2 * Math.Pow(functionGradientNorm, 3)); /* Mean curvature */
 
         return new Curvature(
-            meanCurvature,
-            gaussianCurvature
+            gaussianCurvature,
+            meanCurvature
         );
     }
 
@@ -152,22 +154,18 @@ public class FeatureComputerISOCurvature : AFeatureComputer
         Vector<double> weightedValues = Vector<double>.Build.Dense(surroundingPoints.Count);
         Matrix<double> rightSide = Matrix<double>.Build.Dense(qMatrix.ColumnCount, 1);
 
-        Point3D centeredPoint = new Point3D(
-            referencePoint.X - centerPoint.X,
-            referencePoint.Y - centerPoint.Y,
-            referencePoint.Z - centerPoint.Z
-        );
+        Point3D diff = referencePoint - centerPoint;
 
         for (int i = 0; i < surroundingPoints.Count; i++)
         {
-            double weight = GetGaussianWeight(
-                surroundingPoints[i].X - centeredPoint.X,
-                surroundingPoints[i].Y - centeredPoint.Y,
-                surroundingPoints[i].Z - centeredPoint.Z,
+            double gaussianWeight = GetGaussianWeight(
+                surroundingPoints[i].X - diff.X,
+                surroundingPoints[i].Y - diff.Y,
+                surroundingPoints[i].Z - diff.Z,
                 spreadParameter
             );
 
-
+            double samplingWeight = GetSamplingWeight(surroundingPoints[i]);
 
             qMatrixT[0, i] = Math.Pow(surroundingPoints[i].X, 2);
             qMatrixT[1, i] = Math.Pow(surroundingPoints[i].Y, 2);
@@ -181,11 +179,11 @@ public class FeatureComputerISOCurvature : AFeatureComputer
             qMatrixT[9, i] = 1;
 
             for (int j = 0; j < qMatrixT.RowCount; j++)
-                qMatrix[i, j] = qMatrixT[j, i] * weight;
+                qMatrix[i, j] = qMatrixT[j, i] * gaussianWeight * samplingWeight;
 
             values[i] = d.GetValue(surroundingPoints[i] + centerPoint);
 
-            weightedValues[i] = values[i] * weight;
+            weightedValues[i] = values[i] * gaussianWeight * samplingWeight;
         }
 
         if (CheckSameValues(values, 1))
@@ -219,6 +217,23 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     private double GetGaussianWeight(double x, double y, double z, double spreadParameter)
     {
         return Math.Exp(-spreadParameter * (x * x + y * y + z * z));
+    }
+    
+    private double GetSamplingWeight(Point3D surroundingPoint)
+    {
+        double coordinateSum = Math.Abs(surroundingPoint.X) + Math.Abs(surroundingPoint.Y) + Math.Abs(surroundingPoint.Z);
+        if(Math.Abs(coordinateSum) < 1E-3)
+            return 1;
+            
+        double xSkewness = Math.Abs(surroundingPoint.X) / coordinateSum;
+        double ySkewness = Math.Abs(surroundingPoint.Y) / coordinateSum;
+        double zSkewness = Math.Abs(surroundingPoint.Z) / coordinateSum;
+
+        double samplingWeight = (artificialSpacingX / maxArtificialSpacing) * xSkewness +
+                                (artificialSpacingY / maxArtificialSpacing) * ySkewness +
+                                (artificialSpacingZ / maxArtificialSpacing) * zSkewness;
+        
+        return samplingWeight;
     }
 
     private List<Point3D> CalculateSurroundingPoints(Point3D point, AData d)

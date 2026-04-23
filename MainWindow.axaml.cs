@@ -23,9 +23,9 @@ public partial class MainWindow : Window
     protected override void OnLoaded(RoutedEventArgs e)
     {
         
-        var rl = new RegistrationLauncher();
-        
-        var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Trup/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Trup/macroData.raw"));
+        // var rl = new RegistrationLauncher();
+        //
+        // var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Trup/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Trup/macroData.raw"));
         
         // rl.FeatureVarianceInDifferentRegions(dataObject, 20);
         
@@ -35,22 +35,22 @@ public partial class MainWindow : Window
         // // Console.WriteLine($"Threshold: {threshold}");
         // // return;
         //
-        int numberOfReferenceParams = 60;
-        string[][] dataToSave = new string[numberOfReferenceParams+1][];
-        
-        dataToSave[0] = new string[] { "Param", "Closer", "Further" };
-        
-        for (int i = 0; i < numberOfReferenceParams; i++)
-        {
-            rl.setParam(i * 0.05);
-            var (closer, further) = rl.FeatureVarianceTest(dataObject, 20, i * 0.05);
-            
-            dataToSave[i+1] = new string[] { (i * 0.05).ToString(), closer.ToString(), further.ToString() };
-            
-            Console.WriteLine($"Finished {i}/{numberOfReferenceParams}");
-        }
-        
-        CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/feature_variance_test_curvature.csv", dataToSave);
+        // int numberOfReferenceParams = 60;
+        // string[][] dataToSave = new string[numberOfReferenceParams+1][];
+        //
+        // dataToSave[0] = new string[] { "Param", "Closer", "Further" };
+        //
+        // for (int i = 0; i < numberOfReferenceParams; i++)
+        // {
+        //     rl.setParam(i * 0.05);
+        //     var (closer, further) = rl.FeatureVarianceTest(dataObject, 20, i * 0.05);
+        //     
+        //     dataToSave[i+1] = new string[] { (i * 0.05).ToString(), closer.ToString(), further.ToString() };
+        //     
+        //     Console.WriteLine($"Finished {i}/{numberOfReferenceParams}");
+        // }
+        //
+        // CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/feature_variance_test_curvature.csv", dataToSave);
     }
 
     private void ToggleSidebar_Click(object? sender, RoutedEventArgs e)
