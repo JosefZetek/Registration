@@ -10,6 +10,6 @@ public class Constants
     public static double THRESHOLD = 10;
 
 
-    public static double PROXIMITY_RADIUS = 6;
+    public static double PROXIMITY_RADIUS = 18; //tady bylo 6
     public static double PROXIMITY_SPACING = 0.5;
 }

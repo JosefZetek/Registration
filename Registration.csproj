@@ -91,6 +91,5 @@
       <DependentUpon>ProgressView.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ApplicationCode\FeatureComputers\FeatureComputerGradient2.cs" />
   </ItemGroup>
 </Project>

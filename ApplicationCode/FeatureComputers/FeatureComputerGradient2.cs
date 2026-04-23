@@ -1,10 +1,5 @@
 using System;
-using System.Collections.Generic;
-using MathNet.Numerics.LinearAlgebra;
-
-using Registration.ApplicationCode.DataClasses.Data;
 using Registration.ApplicationCode.Other;
-using Registration.ApplicationCode.Other.FCConfiguration;
 
 namespace Registration.ApplicationCode.FeatureComputers;
 

@@ -215,14 +215,13 @@ public class RegistrationLauncher : IRegistrationLauncher
     public void FeatureVarianceInDifferentRegions(AData dataObject, int numberOfReferencePoints = 20)
     {
         SetSpacing(dataObject, dataObject);
-        double diag = Math.Sqrt(dataObject.MaxValueX * dataObject.MaxValueX + dataObject.MaxValueY * dataObject.MaxValueY + dataObject.MaxValueZ * dataObject.MaxValueZ);
         
         Point3D[] sampledPoints = _sampler.Sample(dataObject, 10_000);
         Random random = new Random();
 
         int numberOfBins = 10;
         int pointsPerBin = 100;
-        double maxDistance = 1; 
+        double maxDistance = 1;
         double binStep = maxDistance / numberOfBins;
 
         List<string[]> csvData = new List<string[]>();
@@ -301,7 +300,7 @@ public class RegistrationLauncher : IRegistrationLauncher
             csvData.Add(row);
         }
 
-        CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/varianceDifferentRegions.csv", csvData.ToArray());
+        CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/varianceDifferentRegionsEditedSampling.csv", csvData.ToArray());
     }
     
     public (double, double) FeatureVarianceTest(AData dataObject, int numberOfReferencePoints, double paramSet)

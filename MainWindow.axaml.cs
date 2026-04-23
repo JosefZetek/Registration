@@ -23,11 +23,11 @@ public partial class MainWindow : Window
     protected override void OnLoaded(RoutedEventArgs e)
     {
         
-        // var rl = new RegistrationLauncher();
+        var rl = new RegistrationLauncher();
         
-        // var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Jatra/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Jatra/macroData.raw"));
+        var dataObject = new VolumetricData(new FilePathDescriptor("/Users/pepazetek/Desktop/Tests/Jatra/macroData.mhd", "/Users/pepazetek/Desktop/Tests/Jatra/macroData.raw"));
         
-        // // rl.FeatureVarianceInDifferentRegions(dataObject, 20);
+        rl.FeatureVarianceInDifferentRegions(dataObject, 20);
         
         // //
         
