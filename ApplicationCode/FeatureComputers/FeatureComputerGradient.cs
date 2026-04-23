@@ -1,32 +1,38 @@
 using System;
 using System.Collections.Generic;
-using DataView;
 using MathNet.Numerics.LinearAlgebra;
 
 using Registration.ApplicationCode.DataClasses.Data;
 using Registration.ApplicationCode.Other;
 using Registration.ApplicationCode.Other.FCConfiguration;
-using Registration.ApplicationCode.RegistrationLaunchers;
 
 namespace Registration.ApplicationCode.FeatureComputers;
 
 public class FeatureComputerGradient : AFeatureComputer
 {
-    private double BORDER_VALUE;
+    private double borderValue;
+    protected double artificialSpacingX, artificialSpacingY, artificialSpacingZ, maxArtificialSpacing;
 
-    private double spreadParameter;
 
     public override int NumberOfFeatures => 1;
 
-    public FeatureComputerGradient(double BORDER_VALUE, int RADIUS)
+    public FeatureComputerGradient(double borderValue, int radius)
     {
-        this.BORDER_VALUE = BORDER_VALUE;
+        this.borderValue = borderValue;
     }
 
     public override void ComputeFeatureVector(AData d, Point3D p, double[] array, int startIndex)
     {
-        CalculateSpreadParameter();
+        CheckArrayDimensions(array, startIndex);
         
+        this.artificialSpacingX = d.XSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.XSpacing) * d.XSpacing : d.XSpacing;
+        this.artificialSpacingY = d.YSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.YSpacing) * d.YSpacing : d.YSpacing;
+        this.artificialSpacingZ = d.ZSpacing < Constants.PROXIMITY_SPACING ? Math.Round(Constants.PROXIMITY_SPACING / d.ZSpacing) * d.ZSpacing : d.ZSpacing;
+
+        this.maxArtificialSpacing = Math.Max(artificialSpacingX, Math.Max(artificialSpacingY, artificialSpacingZ));
+        
+        double spreadParameter = CalculateSpreadParameter();
+
         Point3D nearestGridPoint = new Point3D(
             RoundToNearestSpacingMultiplier(p.X, d.XSpacing),
             RoundToNearestSpacingMultiplier(p.Y, d.YSpacing),
@@ -34,13 +40,7 @@ public class FeatureComputerGradient : AFeatureComputer
         );
 
 
-        double gradientNorm = ComputeGradientNorm(p, d, nearestGridPoint);
-        
-        // CalculateSpreadParameter(d, 0.8);
-        // double a = ComputeGradient(p, d, nearestGridPoint, 5);
-        //
-        // CalculateSpreadParameter(d, 0.9);
-        // double b = ComputeGradient(p, d, nearestGridPoint, 7);
+        double gradientNorm = ComputeGradientNorm(p, d, nearestGridPoint, spreadParameter);
 
         array[startIndex] = gradientNorm;
     }
@@ -55,7 +55,7 @@ public class FeatureComputerGradient : AFeatureComputer
     {
         var config = new FCConfiguration();
         config.FeatureComputerType = FCType .GRADIENT_FEATURE_COMPUTER;
-        config.AddParameter("BorderPercentage", BORDER_VALUE);
+        config.AddParameter("BorderPercentage", borderValue);
         config.AddParameter("Radius", 0);
         config.AddParameter("Comment", "Gradient");
         return config;
@@ -63,7 +63,7 @@ public class FeatureComputerGradient : AFeatureComputer
 
     private double CalculateSpreadParameter()
     {
-        return -Math.Log(BORDER_VALUE) / (Constants.PROXIMITY_RADIUS * Constants.PROXIMITY_RADIUS);
+        return -Math.Log(borderValue) / (Constants.PROXIMITY_RADIUS * Constants.PROXIMITY_RADIUS);
     }
 
     private Vector<double> GetFunctionGradient(Point3D p, Vector<double> coeficients)
@@ -76,15 +76,15 @@ public class FeatureComputerGradient : AFeatureComputer
         });
     }
 
-    private double ComputeGradientNorm(Point3D point, AData d, Point3D centerPoint)
+    private double ComputeGradientNorm(Point3D point, AData d, Point3D centerPoint, double spreadParameter)
     {
         List<Point3D> surroundingPoints = CalculateSurroundingPoints(point, d);
-        Vector<double> coeficients = GetApproximationEquation(surroundingPoints, point, centerPoint, d);
+        Vector<double> coeficients = GetApproximationEquation(surroundingPoints, point, centerPoint, d, spreadParameter);
         Vector<double> functionGradient = GetFunctionGradient(point - centerPoint, coeficients);
         return functionGradient.L2Norm();
     }
 
-    private Vector<double> GetApproximationEquation(List<Point3D> surroundingPoints, Point3D referencePoint, Point3D centerPoint, AData d)
+    private Vector<double> GetApproximationEquation(List<Point3D> surroundingPoints, Point3D referencePoint, Point3D centerPoint, AData d, double spreadParameter)
     {
         int NUMBER_OF_VARIABLES = 10;
 
@@ -94,19 +94,18 @@ public class FeatureComputerGradient : AFeatureComputer
         Vector<double> weightedValues = Vector<double>.Build.Dense(surroundingPoints.Count);
         Matrix<double> rightSide = Matrix<double>.Build.Dense(qMatrix.ColumnCount, 1);
 
-        Point3D centeredPoint = new Point3D(
-            referencePoint.X - centerPoint.X,
-            referencePoint.Y - centerPoint.Y,
-            referencePoint.Z - centerPoint.Z
-        );
+        Point3D diff = referencePoint - centerPoint;
 
         for (int i = 0; i < surroundingPoints.Count; i++)
         {
-            double weight = GetGaussianWeight(
-                surroundingPoints[i].X - centeredPoint.X,
-                surroundingPoints[i].Y - centeredPoint.Y,
-                surroundingPoints[i].Z - centeredPoint.Z
+            double gaussianWeight = GetGaussianWeight(
+                surroundingPoints[i].X - diff.X,
+                surroundingPoints[i].Y - diff.Y,
+                surroundingPoints[i].Z - diff.Z,
+                spreadParameter
             );
+
+            double samplingWeight = GetSamplingWeight(surroundingPoints[i]);
 
             qMatrixT[0, i] = Math.Pow(surroundingPoints[i].X, 2);
             qMatrixT[1, i] = Math.Pow(surroundingPoints[i].Y, 2);
@@ -120,11 +119,11 @@ public class FeatureComputerGradient : AFeatureComputer
             qMatrixT[9, i] = 1;
 
             for (int j = 0; j < qMatrixT.RowCount; j++)
-                qMatrix[i, j] = qMatrixT[j, i] * weight;
+                qMatrix[i, j] = qMatrixT[j, i] * gaussianWeight * samplingWeight;
 
             values[i] = d.GetValue(surroundingPoints[i] + centerPoint);
 
-            weightedValues[i] = values[i] * weight;
+            weightedValues[i] = values[i] * gaussianWeight * samplingWeight;
         }
 
         if (CheckSameValues(values, 1))
@@ -133,8 +132,9 @@ public class FeatureComputerGradient : AFeatureComputer
         /* Constructing right side */
         for (int i = 0; i < rightSide.RowCount; i++)
             rightSide[i, 0] = qMatrixT.Row(i).DotProduct(weightedValues);
-
+        
         Matrix<double> left = qMatrixT.Multiply(qMatrix);
+        
         return left.Solve(rightSide).Column(0).Map(x => double.IsNaN(x) || double.IsInfinity(x) ? 0 : x);
     }
 
@@ -154,22 +154,44 @@ public class FeatureComputerGradient : AFeatureComputer
         return Math.Abs(minValue - maxValue) < threshold;
     }
 
-    private double GetGaussianWeight(double x, double y, double z)
+    private double GetGaussianWeight(double x, double y, double z, double spreadParameter)
     {
-        return Math.Exp(-this.spreadParameter * (x * x + y * y + z * z));
+        return Math.Exp(-spreadParameter * (x * x + y * y + z * z));
+    }
+    
+    protected virtual double GetSamplingWeight(Point3D surroundingPoint)
+    {
+        double coordinateSum = Math.Abs(surroundingPoint.X) + Math.Abs(surroundingPoint.Y) + Math.Abs(surroundingPoint.Z);
+        if(Math.Abs(coordinateSum) < 1E-3)
+            return 1;
+            
+        double xSkewness = Math.Abs(surroundingPoint.X) / coordinateSum;
+        double ySkewness = Math.Abs(surroundingPoint.Y) / coordinateSum;
+        double zSkewness = Math.Abs(surroundingPoint.Z) / coordinateSum;
+
+        double samplingWeight = (artificialSpacingX / maxArtificialSpacing) * xSkewness +
+                                (artificialSpacingY / maxArtificialSpacing) * ySkewness +
+                                (artificialSpacingZ / maxArtificialSpacing) * zSkewness;
+        
+        return samplingWeight;
     }
 
     private List<Point3D> CalculateSurroundingPoints(Point3D point, AData d)
     {
         List<Point3D> surroundingPoints = new List<Point3D>();
 
-        double r = Constants.PROXIMITY_RADIUS;
-        double s = Constants.PROXIMITY_SPACING;
+        int desiredShiftX = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingX);
+        int desiredShiftY = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingY);
+        int desiredShiftZ = (int)Math.Ceiling(Constants.PROXIMITY_RADIUS / artificialSpacingZ);
 
-        for (double x = -r; x <= r; x += s)
-        for (double y = -r; y <= r; y += s)
-        for (double z = -r; z <= r; z += s)
-            surroundingPoints.Add(new Point3D(x, y, z));
+        int minSpacingMultiplierX = MinSpacingMulitplier(point.X, artificialSpacingX, desiredShiftX), maxSpacingMultiplierX = MaxSpacingMultiplier(point.X, d.MaxValueX, artificialSpacingX, desiredShiftX);
+        int minSpacingMulitplierY = MinSpacingMulitplier(point.Y, artificialSpacingY, desiredShiftY), maxSpacingMultiplierY = MaxSpacingMultiplier(point.Y, d.MaxValueY, artificialSpacingY, desiredShiftY);
+        int minSpacingMulitplierZ = MinSpacingMulitplier(point.Z, artificialSpacingZ, desiredShiftZ), maxSpacingMultiplierZ = MaxSpacingMultiplier(point.Z, d.MaxValueZ, artificialSpacingZ, desiredShiftZ);
+
+        for (int x = -minSpacingMultiplierX; x <= maxSpacingMultiplierX; x++)
+        for (int y = -minSpacingMulitplierY; y <= maxSpacingMultiplierY; y++)
+        for (int z = -minSpacingMulitplierZ; z <= maxSpacingMultiplierZ; z++)
+            surroundingPoints.Add(new Point3D(x * artificialSpacingX, y * artificialSpacingY, z * artificialSpacingZ));
 
         return surroundingPoints;
     }
@@ -190,13 +212,17 @@ public class FeatureComputerGradient : AFeatureComputer
         return smallerNeighborDistance < biggerNeighborDistance ? (unitDistance * spacing) : ((unitDistance + 1) * spacing);
     }
 
-    public static int MinSpacingMulitplier(double currentCoordinate, double spacing, int desiredShift)
+    #region SpacingMultipliers
+    
+    private static int MinSpacingMulitplier(double currentCoordinate, double spacing, int desiredShift)
     {
         return (int)Math.Min(currentCoordinate / spacing, desiredShift);
     }
 
-    public static int MaxSpacingMultiplier(double currentCoordinate, double maxValue, double spacing, int desiredShift)
+    private static int MaxSpacingMultiplier(double currentCoordinate, double maxValue, double spacing, int desiredShift)
     {
         return (int)Math.Min((maxValue - currentCoordinate) / spacing, desiredShift);
-    }      
+    }
+    
+    #endregion
 }

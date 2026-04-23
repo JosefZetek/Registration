@@ -11,16 +11,17 @@ public class FeatureComputerISOCurvature : AFeatureComputer
 {
     private double borderValue;
 
-    private double artificialSpacingX, artificialSpacingY, artificialSpacingZ, maxArtificialSpacing;
+    protected double artificialSpacingX, artificialSpacingY, artificialSpacingZ, maxArtificialSpacing;
 
     public override int NumberOfFeatures => 2;
     
     /// <summary>
     /// Feature Computer computing Gaussian and Mean Curvature based on ISO-Surface approximation.
+    /// Uses Linear Interpolation Weighting
     /// </summary>
     /// <param name="borderValue">Kernel output at point distanced RADIUS units from inspected point</param>
-    /// <param name="RADIUS">Number of units distanced from center at which kernel function drops to 'borderPercentage'</param>
-    public FeatureComputerISOCurvature(double borderValue, int RADIUS)
+    /// <param name="radius">Number of units distanced from center at which kernel function drops to 'borderPercentage'</param>
+    public FeatureComputerISOCurvature(double borderValue, int radius)
     {
         this.borderValue = borderValue;
     }
@@ -218,8 +219,7 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     {
         return Math.Exp(-spreadParameter * (x * x + y * y + z * z));
     }
-    
-    private double GetSamplingWeight(Point3D surroundingPoint)
+    protected virtual double GetSamplingWeight(Point3D surroundingPoint)
     {
         double coordinateSum = Math.Abs(surroundingPoint.X) + Math.Abs(surroundingPoint.Y) + Math.Abs(surroundingPoint.Z);
         if(Math.Abs(coordinateSum) < 1E-3)
@@ -272,12 +272,12 @@ public class FeatureComputerISOCurvature : AFeatureComputer
     }
 
     #region SpacingMultipliers
-    public static int MinSpacingMulitplier(double currentCoordinate, double spacing, int desiredShift)
+    private static int MinSpacingMulitplier(double currentCoordinate, double spacing, int desiredShift)
     {
         return (int)Math.Min(currentCoordinate / spacing, desiredShift);
     }
 
-    public static int MaxSpacingMultiplier(double currentCoordinate, double maxValue, double spacing, int desiredShift)
+    private static int MaxSpacingMultiplier(double currentCoordinate, double maxValue, double spacing, int desiredShift)
     {
         return (int)Math.Min((maxValue - currentCoordinate) / spacing, desiredShift);
     }
