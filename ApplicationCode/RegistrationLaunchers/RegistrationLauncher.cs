@@ -209,6 +209,75 @@ public class RegistrationLauncher : IRegistrationLauncher
         return distances;
     }
 
+    public double FeatureDifferenceMean(AData dataObject, double radius, int numberOfReferencePoints = 20, int pointsPerBin = 100)
+    {
+        Point3D[] sampledPoints = _sampler.Sample(dataObject, 10_000);
+        Random random = new Random();
+        
+        List<double> distances = new List<double>();
+
+        
+        for (int i = 0; i < numberOfReferencePoints; i++)
+        {
+            Point3D referencePoint = sampledPoints[i];
+            FeatureVector referenceFV = _featureComputer.ComputeFeatureVector(dataObject, referencePoint);
+            
+            Console.WriteLine($"Processing {i+1}/{numberOfReferencePoints}");
+
+            double minR = 0;
+            double maxR = radius;
+
+            List<Point3D> points = new List<Point3D>();
+            
+            for (int p = 0; p < pointsPerBin; p++)
+            {
+                double theta = random.NextDouble() * 2 * Math.PI;
+                double phi = Math.Acos(2 * random.NextDouble() - 1);
+                double u = random.NextDouble();
+                double distance = Math.Pow(u * (Math.Pow(maxR, 3) - Math.Pow(minR, 3)) + Math.Pow(minR, 3), 1.0 / 3.0);
+
+                double shiftX = distance * Math.Sin(phi) * Math.Cos(theta);
+                double shiftY = distance * Math.Sin(phi) * Math.Sin(theta);
+                double shiftZ = distance * Math.Cos(phi);
+
+                Point3D shiftedPoint = new Point3D(
+                    referencePoint.X + shiftX,
+                    referencePoint.Y + shiftY,
+                    referencePoint.Z + shiftZ
+                );
+                
+                points.Add(shiftedPoint);
+            }
+            
+            List<FeatureVector> featureVectors = CalculateFeatureVectors(dataObject, _featureComputer, points.ToArray());
+
+            List<FeatureVector> allFV = new List<FeatureVector> { referenceFV };
+            allFV.AddRange(featureVectors);
+
+            FeatureNormalizer featureNormalizer = new FeatureNormalizer(allFV, allFV);
+            allFV = featureNormalizer.NormalizeList(allFV);
+
+            double[] featureWeights = new double[this._featureComputer.NumberOfFeatures];
+            this._featureComputer.GetWeights(featureWeights, 0);
+
+            foreach (FeatureVector fv in allFV)
+            {
+                for (int j = 0; j < fv.Features.Length; j++)
+                    fv.Features[j] *= featureWeights[j];
+            }
+
+            FeatureVector normalizedRefFV = allFV[0];
+            for (int j = 1; j < allFV.Count; j++)
+            {
+                distances.Add(normalizedRefFV.DistTo(allFV[j]));
+            }
+
+            
+        }
+        
+        return distances.Count > 0 ? distances.Average() : 0.0;
+    }
+
     /// <summary>
     /// Outputs data that showing for a given distance (x axis) how does the variance (feature vector distance between center point and surrounding points differ) 
     /// </summary>
@@ -219,6 +288,7 @@ public class RegistrationLauncher : IRegistrationLauncher
         Point3D[] sampledPoints = _sampler.Sample(dataObject, 10_000);
         Random random = new Random();
 
+        int minBinDistance = 2;
         int numberOfBins = 10;
         int pointsPerBin = 100;
         double maxDistance = 1;
@@ -229,7 +299,7 @@ public class RegistrationLauncher : IRegistrationLauncher
         string[] header = new string[numberOfBins + 1];
         header[0] = "RefPointIdx";
         for (int b = 0; b < numberOfBins; b++)
-            header[b + 1] = $"Bin_{b * binStep:0.00}-{(b + 1) * binStep:0.00}";
+            header[b + 1] = $"Bin_{(minBinDistance + (b * binStep)):0.00}-{(minBinDistance + ((b + 1) * binStep)):0.00}";
         csvData.Add(header);
 
         for (int i = 0; i < numberOfReferencePoints; i++)
@@ -244,11 +314,11 @@ public class RegistrationLauncher : IRegistrationLauncher
 
             for (int b = 0; b < numberOfBins; b++)
             {
-                double minR = b * binStep;
-                double maxR = (b + 1) * binStep;
-                
-                List<FeatureVector> binFeatureVectors = new List<FeatureVector>();
+                double minR = minBinDistance + b * binStep;
+                double maxR = minBinDistance + (b + 1) * binStep;
 
+                List<Point3D> points = new List<Point3D>();
+                
                 for (int p = 0; p < pointsPerBin; p++)
                 {
                     double theta = random.NextDouble() * 2 * Math.PI;
@@ -265,9 +335,11 @@ public class RegistrationLauncher : IRegistrationLauncher
                         referencePoint.Y + shiftY,
                         referencePoint.Z + shiftZ
                     );
-
-                    binFeatureVectors.Add(_featureComputer.ComputeFeatureVector(dataObject, shiftedPoint));
+                    
+                    points.Add(shiftedPoint);
                 }
+                
+                List<FeatureVector> binFeatureVectors = CalculateFeatureVectors(dataObject, _featureComputer, points.ToArray());
 
                 List<FeatureVector> allFV = new List<FeatureVector> { referenceFV };
                 allFV.AddRange(binFeatureVectors);
@@ -300,7 +372,7 @@ public class RegistrationLauncher : IRegistrationLauncher
             csvData.Add(row);
         }
 
-        CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/varianceDifferentRegionsEditedSampling.csv", csvData.ToArray());
+        CSVWriter.WriteResult("/Users/pepazetek/Desktop/Tests/varianceDifferentRegionsEditedSampling3.csv", csvData.ToArray());
     }
     
     public (double, double) FeatureVarianceTest(AData dataObject, int numberOfReferencePoints, double paramSet)
