@@ -1,0 +1,65 @@
+{
+  "configurations": [
+    {
+      "FeatureComputerType": 4,
+      "Parameters": {
+        "Comment": {
+          "Value": "Point Value"
+        }
+      }
+    },
+    {
+      "FeatureComputerType": 1,
+      "Parameters": {
+        "BorderPercentage": {
+          "Value": 0.01
+        },
+        "Radius": {
+          "Value": 3
+        },
+        "Comment": {
+          "Value": "Curvature"
+        }
+      }
+    },
+    {
+      "FeatureComputerType": 2,
+      "Parameters": {
+        "Comment": {
+          "Value": "PCA"
+        }
+      }
+    },
+    {
+      "FeatureComputerType": 0,
+      "Parameters": {
+        "BorderPercentage": {
+          "Value": 0.01
+        },
+        "Radius": {
+          "Value": 3
+        },
+        "Comment": {
+          "Value": "Gradient"
+        }
+      }
+    },
+    {
+      "FeatureComputerType": 3,
+      "Parameters": {
+        "QuantileValues": {
+          "Value": [
+            0.0,
+            0.25,
+            0.5,
+            0.7,
+            1.0
+          ]
+        },
+        "Comment": {
+          "Value": "Quantiles"
+        }
+      }
+    }
+  ]
+}

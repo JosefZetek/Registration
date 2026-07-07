@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "FeatureComputerType": 1,
+      "Parameters": {
+        "BorderPercentage": {
+          "Value": 0.01
+        },
+        "Radius": {
+          "Value": 3
+        },
+        "Comment": {
+          "Value": "Curvature"
+        }
+      }
+    }
+  ]
+}

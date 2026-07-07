@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "FeatureComputerType": 2,
+      "Parameters": {
+        "Comment": {
+          "Value": "PCA"
+        }
+      }
+    }
+  ]
+}

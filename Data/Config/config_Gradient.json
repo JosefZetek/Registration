@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "FeatureComputerType": 0,
+      "Parameters": {
+        "BorderPercentage": {
+          "Value": 0.001
+        },
+        "Radius": {
+          "Value": 3
+        },
+        "Comment": {
+          "Value": "Gradient"
+        }
+      }
+    }
+  ]
+}

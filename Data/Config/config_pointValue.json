@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "FeatureComputerType": 4,
+      "Parameters": {
+        "Comment": {
+          "Value": "Point Value"
+        }
+      }
+    }
+  ]
+}
