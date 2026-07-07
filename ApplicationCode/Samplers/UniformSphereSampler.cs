@@ -98,7 +98,6 @@ public class UniformSphereSampler
 
         #region Private Methods - Points Precalculation
 
-
         /// <summary>
         /// Method initializes uniformly distributed points
         /// closer than RADIUS from the origin with specified spacing

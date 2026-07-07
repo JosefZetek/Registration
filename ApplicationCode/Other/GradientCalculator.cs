@@ -18,7 +18,12 @@ public class GradientCalculator
         List<Point3D> surroundingPoints = GetSurroundingPoints(nearestGridPoint, d, 3);
         SpreadParameters parameters = CalculateSpreadParameter(d, 0.4);
         Vector<double> coeficients = GetApproximationEquation(surroundingPoints, p, nearestGridPoint, d, parameters);
-        Vector<double> functionGradient = GetFunctionGradient(p, coeficients);
+        /* The quadric is fitted in coordinates centered on nearestGridPoint, so its
+           gradient has to be evaluated at the offset from that center. Evaluating at
+           the absolute position lets the quadratic terms (2*a*x, ...) blow up with
+           the distance from the volume origin and the direction becomes a function
+           of absolute position instead of the local data. */
+        Vector<double> functionGradient = GetFunctionGradient(p - nearestGridPoint, coeficients);
 
         return functionGradient;
     }

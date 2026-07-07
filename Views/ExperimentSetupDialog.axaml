@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Registration.Views.ExperimentSetupDialog"
+        Title="Experiment Setup"
+        Width="640" Height="640"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="16">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="10">
+            <TextBlock Text="Experiment Setup" FontSize="18" FontWeight="Bold"/>
+            <TextBlock TextWrapping="Wrap" Opacity="0.7"
+                       Text="Add one or more macro volumes (.mhd + .raw). For each macro volume, add tests: a micro volume (.mhd + .raw) together with the ground-truth transformation (.txt) the registration result will be compared against."/>
+
+            <Button Content="+ Add Macro Data" Click="OnAddMacroButton_Click"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="10"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <TextBlock x:Name="ValidationText" Foreground="#C0392B" VerticalAlignment="Center"/>
+            <Button Content="Cancel" Click="OnCancelButton_Click"/>
+            <Button x:Name="RunButton" Content="Run Experiments" IsEnabled="False" Click="OnRunButton_Click"/>
+        </StackPanel>
+
+        <TreeView x:Name="FilePreviewTree" Margin="0,12,0,0"/>
+
+    </DockPanel>
+
+</Window>

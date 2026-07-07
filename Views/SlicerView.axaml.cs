@@ -44,7 +44,9 @@ namespace Registration.Views
         {
             InitializeComponent();
             _mainContent = mainContent;
-            _dataSlicer = new TransformedDataSlicer(microData, macroData, transformation);
+            /* TransformedDataSlicer expects (macroData, microData, transformation) - passing
+               them the other way round made the macro volume render as the transformed overlay. */
+            _dataSlicer = new TransformedDataSlicer(macroData, microData, transformation);
             UpdateSliceImage();
         }
 

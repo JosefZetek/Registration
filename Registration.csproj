@@ -87,8 +87,16 @@
       <DependentUpon>SlicerSetupView.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\ProgressView.axaml.cs">
-      <DependentUpon>ProgressView.axaml</DependentUpon>
+    <Compile Update="Views\ExperimentView.axaml.cs">
+      <DependentUpon>ExperimentView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\ExperimentSetupDialog.axaml.cs">
+      <DependentUpon>ExperimentSetupDialog.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\AlignmentView.axaml.cs">
+      <DependentUpon>AlignmentView.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

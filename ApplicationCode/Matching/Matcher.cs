@@ -22,7 +22,7 @@ public class Matcher : IMatcher
         }
 
         matches.Sort((x, y) => x.Similarity.CompareTo(y.Similarity));
-        int numberOfMatches = (int)(matches.Count / 100.0 * threshold); //takes top [threshold] %
+        int numberOfMatches = (int)(matches.Count * threshold); //takes top [threshold] fraction (0..1]
         Match[] matchesReturn = new Match[numberOfMatches];
         int j = 0;
         for (int i = matches.Count - 1; i > matches.Count - 1 - numberOfMatches; i--) //takes top [threshold] % from back (adscending order)

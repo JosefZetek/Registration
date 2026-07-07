@@ -95,9 +95,7 @@ public class PointApproximation
             if (!data.PointWithinBounds(newX, newY, newZ))
                 break;
 
-            currentPoint.X = newX;
-            currentPoint.Y = newY;
-            currentPoint.Z = newZ;
+            currentPoint = new Point3D(newX, newY, newZ);
 
 			previousDx = dx;
 			previousDy = dy;

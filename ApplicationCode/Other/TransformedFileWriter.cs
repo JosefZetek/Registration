@@ -23,8 +23,6 @@ public class TransformedFileSaver
 
     private Vector<double> baseXTransformed, baseYTransformed, baseZTransformed;
 
-    private const int OUT_OF_BOUNDS = 5000;
-
     /// <summary>
     /// Class saves artificial data to a given directory
     /// </summary>
@@ -133,15 +131,21 @@ public class TransformedFileSaver
 
                 for (numberX = 0; numberX < Measures[0]; numberX++, currentCoordinates += Spacing[0] * baseXTransformed)
                 {
-                    //USHORT is used, thus 2^16-1 is used for max value
-                    if (sourceObject.PointWithinBounds(currentCoordinates[0], currentCoordinates[1], currentCoordinates[2]))
-                        currentValue = (ushort)Math.Min(
-                            sourceObject.GetValue(currentCoordinates[0], currentCoordinates[1], currentCoordinates[2]),
-                            ushort.MaxValue
-                        );
+                    /* Coordinates falling outside the source take the clamped border
+                       value (border extension) instead of a constant marker. A constant
+                       (previously 5000) creates the sharpest edge of the whole volume
+                       exactly along the fake data boundary; the variance-driven sampler
+                       then prefers those unmatched fake features over real ones. */
+                    double sourceX = Math.Clamp(currentCoordinates[0], 0, sourceObject.MaxValueX);
+                    double sourceY = Math.Clamp(currentCoordinates[1], 0, sourceObject.MaxValueY);
+                    double sourceZ = Math.Clamp(currentCoordinates[2], 0, sourceObject.MaxValueZ);
 
-                    else
-                        currentValue = OUT_OF_BOUNDS;
+                    //USHORT is used, thus values are clamped to [0, 2^16-1]
+                    currentValue = (ushort)Math.Clamp(
+                        sourceObject.GetValue(sourceX, sourceY, sourceZ),
+                        0,
+                        ushort.MaxValue
+                    );
 
                     // Convert ushort to bytes and add to buffer
                     buffer[index++] = (byte)(currentValue & 0xFF);
@@ -156,6 +160,11 @@ public class TransformedFileSaver
                 }
             }
         }
+
+        /* Flush the last partially filled buffer - without this the written volume is
+           truncated by up to the buffer size and cannot be read back completely. */
+        if (index > 0)
+            binaryWriter.Write(buffer, 0, index);
 
         binaryWriter.Close();
     }

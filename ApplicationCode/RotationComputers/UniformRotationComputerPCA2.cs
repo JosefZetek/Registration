@@ -38,6 +38,16 @@ public class UniformRotationComputerPCA : ATransformer
         if (values == null)
             return null;
 
+        /* Disambiguation gradient fitted to the very same sphere samples the PCA uses.
+           A gradient estimated on the data grid is not comparable between two volumes
+           with different spacing, and it must be evaluated relative to the inspected
+           point - otherwise the sign disambiguation below is only consistent when
+           micro and macro are the identical volume. */
+        Vector<double> gradient = CalculateLeastSquaresGradient(points, values, point);
+
+        if (gradient == null || gradient.L2Norm() < 1e-12)
+            return null;
+
         /* Threshold to filter insignificant  values */
         QuickSelectClass quickSelectClass = new QuickSelectClass();
         double threshold = quickSelectClass.QuickSelect(values, values.Count / 2);
@@ -48,8 +58,6 @@ public class UniformRotationComputerPCA : ATransformer
         Matrix<double> covarianceMatrix = CalculateCovarianceMatrix(points, meanVector);
 
         Matrix<double> basisMatrix = GetEigenVectors(covarianceMatrix.Evd());
-
-        Vector<double> gradient = GradientCalculator.GetFunctionGradient(point, d);
 
         int fixedColumn = AdjustColumnBasedOnGradient(basisMatrix, gradient);
         int unstableColumnIndex = fixedColumn == 1 ? 0 : 1;
@@ -72,39 +80,101 @@ public class UniformRotationComputerPCA : ATransformer
         //Set cross product
         basisMatrix.SetColumn(
             crossProductColumn,
-            CrossProduct(basisMatrix.Column(fixedColumn), basisMatrix.Column(unstableColumnIndex))
+            RightHandedCrossColumn(basisMatrix, crossProductColumn)
         );
 
         alternativeBasisMatrix.SetColumn(
             crossProductColumn,
-            CrossProduct(alternativeBasisMatrix.Column(fixedColumn), alternativeBasisMatrix.Column(unstableColumnIndex))
+            RightHandedCrossColumn(alternativeBasisMatrix, crossProductColumn)
         );
 
         return new Matrix<double>[] { basisMatrix, alternativeBasisMatrix };
     }
 
+    /// <summary>
+    /// Column that completes the other two into a right-handed orthonormal basis:
+    /// column c = column (c+1)%3 x column (c+2)%3. The cyclic order keeps det = +1
+    /// regardless of which column was fixed by the gradient; the previous
+    /// fixed x unstable order produced det = -1 (a reflection instead of a rotation)
+    /// whenever the fixed column was not column 0.
+    /// </summary>
+    private Vector<double> RightHandedCrossColumn(Matrix<double> basisMatrix, int crossProductColumn)
+    {
+        return CrossProduct(
+            basisMatrix.Column((crossProductColumn + 1) % 3),
+            basisMatrix.Column((crossProductColumn + 2) % 3)
+        );
+    }
+
+    /// <summary>
+    /// Weighted least-squares fit of the linear model v ~ c + g * (x - center) over the
+    /// sphere samples; returns g, the local intensity gradient. Solving the normal
+    /// equations keeps the estimate correct even when the sphere is clipped by the
+    /// volume border (an asymmetric sample set would bias a plain first moment).
+    /// </summary>
+    private Vector<double> CalculateLeastSquaresGradient(List<Point3D> points, List<double> values, Point3D center)
+    {
+        const int VARIABLES = 4;
+
+        double[,] normalMatrix = new double[VARIABLES, VARIABLES];
+        double[] rightSide = new double[VARIABLES];
+        double[] q = new double[VARIABLES];
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            q[0] = points[i].X - center.X;
+            q[1] = points[i].Y - center.Y;
+            q[2] = points[i].Z - center.Z;
+            q[3] = 1;
+
+            for (int j = 0; j < VARIABLES; j++)
+            {
+                rightSide[j] += q[j] * values[i];
+
+                for (int k = j; k < VARIABLES; k++)
+                    normalMatrix[j, k] += q[j] * q[k];
+            }
+        }
+
+        /* Mirror the accumulated upper triangle (the normal matrix is symmetric) */
+        for (int j = 1; j < VARIABLES; j++)
+            for (int k = 0; k < j; k++)
+                normalMatrix[j, k] = normalMatrix[k, j];
+
+        Vector<double> solution = Matrix<double>.Build.DenseOfArray(normalMatrix)
+            .Solve(Vector<double>.Build.DenseOfArray(rightSide));
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (double.IsNaN(solution[i]) || double.IsInfinity(solution[i]))
+                return null;
+        }
+
+        return solution.SubVector(0, 3);
+    }
+
     private int AdjustColumnBasedOnGradient(Matrix<double> basisMatrix, Vector<double> gradient)
     {
-        double greatestDotProduct = double.NegativeInfinity, currentDotProduct = 0;
-        Vector<double> column;
+        double greatestDotProduct = double.NegativeInfinity;
+        double selectedDotProduct = 0;
 
         int columnIndex = 0;
 
         for (int i = 0; i < basisMatrix.ColumnCount; i++)
         {
-            column = basisMatrix.Column(i);
-            currentDotProduct = column.DotProduct(gradient);
+            double currentDotProduct = basisMatrix.Column(i).DotProduct(gradient);
 
-            if(greatestDotProduct < Math.Abs(currentDotProduct))
+            if (greatestDotProduct < Math.Abs(currentDotProduct))
             {
-                greatestDotProduct = currentDotProduct;
+                greatestDotProduct = Math.Abs(currentDotProduct);
+                selectedDotProduct = currentDotProduct;
                 columnIndex = i;
             }
         }
 
         basisMatrix.SetColumn(
             columnIndex,
-            basisMatrix.Column(columnIndex) * Math.Sign(currentDotProduct)
+            basisMatrix.Column(columnIndex) * Math.Sign(selectedDotProduct)
         );
 
         return columnIndex;

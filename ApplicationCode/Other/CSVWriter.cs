@@ -32,11 +32,12 @@ public class CSVWriter
     /// <param name="fileName">Name of a file (including path and extension)</param>
     /// <param name="labelX">Header for the X axis</param>
     /// <param name="labelY">Header for the Y axis</param>
+    /// <param name="labelZ">Header for the Z axis</param>
     /// <param name="listOfPoints">List of points to be printed out</param>
-    public static void WriteResult(string fileName, List<Point3D> listOfPoints)
+    public static void WriteResult(string fileName, string labelX, string labelY, string labelZ, List<Point3D> listOfPoints)
     {
         StreamWriter writer = new StreamWriter(fileName);
-        //writer.WriteLine("{0}; {1}; {2}", labelX, labelY);
+        writer.WriteLine("{0}; {1}; {2}", labelX, labelY, labelZ);
 
         foreach (Point3D point in listOfPoints)
         {

@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             x:Class="Registration.Views.ExperimentView">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <TextBlock Grid.Row="0" Text="Experiment Launcher" FontSize="18" FontWeight="Bold"/>
+
+        <StackPanel Grid.Row="1" x:Name="ProgressPanel" Spacing="6" Margin="0,12,0,0">
+            <TextBlock x:Name="TestText" Text="Starting..."/>
+            <ProgressBar x:Name="TestProgressBar" Minimum="0"/>
+            <TextBlock x:Name="StageText"/>
+            <ProgressBar x:Name="FeatureProgressBar" Minimum="0"/>
+            <TextBlock x:Name="FeatureText"/>
+        </StackPanel>
+
+        <lvc:CartesianChart Grid.Row="2" x:Name="ResultsChart" Margin="0,12,0,0"/>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="10" Margin="0,12,0,0">
+            <TextBlock x:Name="SummaryText" VerticalAlignment="Center" Opacity="0.7"/>
+            <Button x:Name="ExportButton" Content="Export CSV" IsEnabled="False"
+                    Click="OnExportButton_Click"/>
+        </StackPanel>
+
+    </Grid>
+
+</UserControl>

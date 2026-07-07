@@ -9,36 +9,37 @@ public class PositionMatcher : IMatcher
 {
     public Match[] Match(FeatureVector[] fMicro, FeatureVector[] fMacro, double threshold)
     {
-        var prematches = new List<(FeatureVector RefVec, List<Match> LocalMatches, double SpatialVariance)>();
+        var prematches = new List<(Match LocalMatch, double SpatialVariance)>();
 
         for (int i = 0; i < fMicro.Length; i++)
         {
-            var localMatches = FindMatchesWithVariance(fMicro[i], fMacro, 10);
+            var localMatches = FindMatchesWithVariance(fMicro[i], fMacro, 1.4);
             
-            if (localMatches.Count > 0)
+            if(localMatches.Count == 0)
+                continue;
+            
+            double sumX = 0, sumY = 0, sumZ = 0;
+            foreach (var m in localMatches)
             {
-                double sumX = 0, sumY = 0, sumZ = 0;
-                foreach (var m in localMatches)
-                {
-                    var pt = m.macroFV.Point;
-                    sumX += pt.X;
-                    sumY += pt.Y;
-                    sumZ += pt.Z;
-                }
-                
-                int n = localMatches.Count;
-                var avgPoint = new Point3D(sumX / n, sumY / n, sumZ / n);
-
-                double posVariance = 0;
-                foreach (var m in localMatches)
-                {
-                    double dist = m.macroFV.Point.Distance(avgPoint);
-                    posVariance += dist * dist;
-                }
-                posVariance /= n;
-
-                prematches.Add((fMicro[i], localMatches, posVariance));
+                var pt = m.macroFV.Point;
+                sumX += pt.X;
+                sumY += pt.Y;
+                sumZ += pt.Z;
             }
+                
+            int n = localMatches.Count;
+            var avgPoint = new Point3D(sumX / n, sumY / n, sumZ / n);
+
+            double posVariance = 0;
+            foreach (var m in localMatches)
+            {
+                double dist = m.macroFV.Point.Distance(avgPoint);
+                posVariance += dist * dist;
+            }
+            posVariance /= n;
+            
+            //At 0th index is the closest feature vector (ordered from the findmatcheswithvariance method)
+            prematches.Add((localMatches[0], posVariance));
         }
 
         var sortedPrematches = prematches
@@ -47,31 +48,32 @@ public class PositionMatcher : IMatcher
         
         int keepCount = (int)System.Math.Ceiling(sortedPrematches.Count * threshold);
 
-        var spatialVariance = sortedPrematches
-            .Take(keepCount)
-            .Select(p => p.SpatialVariance)
-            .ToList();
-
-        //save into csv
-        List<Point2D> variancePoints = new List<Point2D>();
+        // var spatialVariance = sortedPrematches
+        //     .Take(keepCount)
+        //     .Select(p => p.SpatialVariance)
+        //     .ToList();
         
-        for (int i = 0; i<spatialVariance.Count; i++)
-        {
-            variancePoints.Add(new Point2D(i, spatialVariance[i]));
-        }
-        
-        CSVWriter.WriteResult("/Users/pepazetek/spatialVariance.csv", "index", "spatialVariance", variancePoints);
+        // var realDistances = sortedPrematches
+        //     .Take(keepCount)
+        //     .Select(p => p.LocalMatch.macroFV.Point.Distance(p.LocalMatch.microFV.Point))
+        //     .ToList();
 
         return sortedPrematches
             .Take(keepCount)
-            .SelectMany(p => p.LocalMatches)
+            .Select(p => p.LocalMatch)
             .ToArray();
     }
 
     private List<Match> FindMatchesWithVariance(FeatureVector featureVector, FeatureVector[] fMacro, double expectedVariance)
     {
+        /* Upper bound on collected matches in case the variance cutoff triggers late
+           (e.g. when the feature distance scale changes with the normalization method).
+           A pattern repeating across the object still shows its high spatial variance
+           within this many nearest matches. */
+        const int MAX_LOCAL_MATCHES = 100;
+
         var distances = fMacro
-            .Select(m => new { Macro = m, Dist = featureVector.DistTo(m) })
+            .Select(m => new { Macro = m, Dist = featureVector == m ? 10000 : featureVector.DistTo(m) })
             .OrderBy(x => x.Dist)
             .ToList();
 
@@ -79,7 +81,7 @@ public class PositionMatcher : IMatcher
         double sum = 0;
         double sumSq = 0;
 
-        for (int i = 0; i < distances.Count; i++)
+        for (int i = 0; i < distances.Count && localMatches.Count < MAX_LOCAL_MATCHES; i++)
         {
             double d = distances[i].Dist;
             sum += d;

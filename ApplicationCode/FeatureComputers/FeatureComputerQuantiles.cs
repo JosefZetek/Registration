@@ -46,9 +46,11 @@ public class FeatureComputerQuantiles : AFeatureComputer
         List<double> values = CalculateValues(points, d);
         if(values == null)
         {
+            /* NaN marks the vector as invalid; such vectors are dropped before
+               normalization so a single flat neighborhood cannot poison the statistics. */
             for (int i = 0; i < NumberOfFeatures; i++)
-                array[startIndex + i] = double.PositiveInfinity;
-            
+                array[startIndex + i] = double.NaN;
+
             return;
         }
         

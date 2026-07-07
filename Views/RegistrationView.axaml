@@ -4,6 +4,9 @@
              xmlns:views="clr-namespace:Registration.Views"
              x:Class="Registration.Views.RegistrationView">
 
+    <!-- ScrollViewer + WrapPanels keep the view usable on small windows: rows wrap
+         instead of overflowing, and anything that still doesn't fit scrolls. -->
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnDefinitions="*">
 
         <StackPanel
@@ -25,7 +28,7 @@
                     Padding="10"/>
         </StackPanel>
 
-        <StackPanel
+        <WrapPanel
             Grid.Column="0"
             Grid.Row="1"
             HorizontalAlignment="Center"
@@ -50,10 +53,10 @@
 
             <views:IndicatorView
                 x:Name="IndicatorMacroRaw"
-                Text="Macro Meta Data"
+                Text="Macro Raw Data"
                 Opacity="0.5"/>
 
-        </StackPanel>
+        </WrapPanel>
             
 
         <TextBlock
@@ -65,12 +68,12 @@
             FontWeight="Light"
             Margin="12"/>
 
-        <StackPanel
+        <WrapPanel
             Grid.Row="3"
             Grid.Column="0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-        Orientation="Horizontal">
+            Orientation="Horizontal">
 
             <views:ButtonView
                 Text="Select Micro Meta Data"
@@ -82,7 +85,7 @@
                 Icon="{SvgImage /Assets/Images/file-raw.svg}"
                 Click="OnSelectMicroRawButton_Click"/>
 
-        </StackPanel>
+        </WrapPanel>
 
 
         <Separator
@@ -98,7 +101,7 @@
             FontWeight="Light"
             Margin="12"/>
 
-        <StackPanel
+        <WrapPanel
             Grid.Row="6"
             Grid.Column="0"
             HorizontalAlignment="Center"
@@ -115,7 +118,7 @@
                 Icon="{SvgImage /Assets/Images/file-raw.svg}"
                 Click="OnSelectMacroRawButton_Click"/>
 
-        </StackPanel>
+        </WrapPanel>
 
         <Separator
                 Grid.Row="7"
@@ -126,18 +129,55 @@
             Grid.Column="0"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-        Orientation="Horizontal">
+            Orientation="Vertical">
 
-            <views:ButtonView
-                Text="Run Registration"
-                Icon="{SvgImage /Assets/Images/run.svg}"
-                Click="OnRunButton_Click"/>
+            <WrapPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal">
 
-            <views:ButtonView
-                Text="Clear Selection"
-                Icon="{SvgImage /Assets/Images/clear.svg}"
-                Click="OnClearButton_Click"/>
+                <views:ButtonView
+                    Text="Run Registration"
+                    Icon="{SvgImage /Assets/Images/run.svg}"
+                    Click="OnRunButton_Click"/>
 
-        </StackPanel> 
+                <views:ButtonView
+                    Text="Clear Selection"
+                    Icon="{SvgImage /Assets/Images/clear.svg}"
+                    Click="OnClearButton_Click"/>
+
+            </WrapPanel>
+
+            <StackPanel
+                x:Name="ProgressPanel"
+                Orientation="Vertical"
+                Margin="12"
+                MaxWidth="400"
+                IsVisible="False">
+
+                <TextBlock
+                    x:Name="StageText"
+                    Text=""
+                    HorizontalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Margin="0,0,0,2"/>
+
+                <TextBlock
+                    x:Name="ProgressText"
+                    Text="Computing feature vectors..."
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,6"/>
+
+                <ProgressBar
+                    x:Name="FeatureProgressBar"
+                    Minimum="0"
+                    Maximum="1"
+                    Value="0"
+                    Height="20"
+                    ShowProgressText="True"/>
+
+            </StackPanel>
+
+        </StackPanel>
     </Grid>
+    </ScrollViewer>
 </UserControl>

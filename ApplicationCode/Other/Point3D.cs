@@ -1,26 +1,22 @@
-﻿using System;
+using System;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace Registration.ApplicationCode.Other;
 
-public class Point3D
-{ 
+/// <summary>
+/// Immutable 3D point. A readonly struct so that the huge numbers of points
+/// created during sampling and approximation never touch the heap.
+/// </summary>
+public readonly struct Point3D
+{
     /* Coordinates */
-    private double x;
-    private double y;
-    private double z;
-    
-    public double X { get => x; set => x = value; }
-    public double Y { get => y; set => y = value; }
-    public double Z { get => z; set => z = value; }
+    private readonly double x;
+    private readonly double y;
+    private readonly double z;
 
-    /// <summary>
-    /// Initializes a point with [0, 0, 0] coordinates
-    /// </summary>
-    public Point3D()
-    {
-        Constructor(0, 0, 0);
-    }
+    public double X { get => x; }
+    public double Y { get => y; }
+    public double Z { get => z; }
 
     /// <summary>
     /// Initializes a point with given [x, y, z] coordinates
@@ -29,27 +25,6 @@ public class Point3D
     /// <param name="y">Coordinate y</param>
     /// <param name="z">Coordinate z</param>
     public Point3D(double x, double y, double z)
-    {
-        Constructor(x, y, z);
-    }
-
-    /// <summary>
-    /// Vector with 3 values
-    /// [0] = x
-    /// [1] = y
-    /// [2] = z
-    /// Vector's dimension has to be 3
-    /// </summary>
-    /// <param name="coordinates">Vector [x,y,z]</param>
-    // public Point3D(Vector<double> coordinates)
-    // {
-    //     if (coordinates.Count != 3)
-    //         throw new ArgumentException("Vector's dimension has to be 3");
-    //
-    //     this.coordinates = coordinates;
-    // }
-
-    private void Constructor(double x, double y, double z)
     {
         this.x = x;
         this.y = y;
@@ -87,7 +62,7 @@ public class Point3D
     {
         if(m.ColumnCount != 3 || m.RowCount != 3)
             throw new ArgumentException("Rotation matrix needs to be 3x3");
-        
+
         return new Point3D(
             m[0, 0] * x + m[0, 1] * y + m[0, 2] * z,
             m[1, 0] * x + m[1, 1] * y + m[1, 2] * z,
@@ -99,27 +74,27 @@ public class Point3D
     {
         if (t.Count != 3)
             throw new ArgumentException("Translation vector needs to have dimension 3");
-        
+
         return new Point3D(this.x + t[0], this.y + t[1], this.z + t[2]);
     }
 
     /// <summary>
-    /// Creates a copy of this instance
+    /// Creates a copy of this instance (structs copy by value, kept for API compatibility)
     /// </summary>
-    /// <returns>Returns instance of a coppied point</returns>
+    /// <returns>Returns a copy of the point</returns>
     public Point3D Copy()
     {
-        return new Point3D(this.x, this.y, this.z);
+        return this;
     }
 
     public Vector<double> ToVector()
     {
         var vector = Vector<double>.Build.Dense(3);
-        
+
         vector[0] = this.x;
         vector[1] = this.y;
         vector[2] = this.z;
-        
+
         return vector;
     }
 
@@ -139,7 +114,7 @@ public class Point3D
     /// <returns></returns>
     public double Distance(Point3D differentPoint)
     {
-        
+
         double dx = X - differentPoint.X;
         double dy = Y - differentPoint.Y;
         double dz = Z - differentPoint.Z;
@@ -177,7 +152,7 @@ public class Point3D
     {
         if (b.x == 0 || b.y == 0 || b.z == 0)
             throw new DivideByZeroException("Cannot divide by zero in one of the coordinates");
-        
+
         return new Point3D(
             a / b.x,
             a / b.y,

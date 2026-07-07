@@ -117,16 +117,57 @@ public class VolumetricData : AData
 
     public override double GetValue(Point3D point)
     {
-        int xIndexLower = ConstrainIndex((int)(point.X / XSpacing), Data.DimSize[0] - 1);
-        int yIndexLower = ConstrainIndex((int)(point.Y / YSpacing), Data.DimSize[1] - 1);
-        int zIndexLower = ConstrainIndex((int)(point.Z / ZSpacing), Data.DimSize[2] - 1);
+        // 1. Convert to local index coordinates once.
+        // Clamping the continuous coordinates (border extension) keeps all derived
+        // indices valid and the interpolation weights in [0, 1] even for points
+        // outside the volume; previously a negative coordinate produced a negative
+        // upper-neighbor index and crashed the lookup.
+        double fx = Math.Max(0, Math.Min(point.X / XSpacing, Data.DimSize[0] - 1));
+        double fy = Math.Max(0, Math.Min(point.Y / YSpacing, Data.DimSize[1] - 1));
+        double fz = Math.Max(0, Math.Min(point.Z / ZSpacing, Data.DimSize[2] - 1));
 
-        int zIndexHigher = ConstrainIndex(zIndexLower + 1, Data.DimSize[2] - 1);
+        int x0 = (int)fx;
+        int y0 = (int)fy;
+        int z0 = (int)fz;
 
-        double interpolatedXYLowerZ = InterpolationXYPlane(point.X, point.Y, zIndexLower, xIndexLower, yIndexLower);
-        double interpolatedXYHigherZ = InterpolationXYPlane(point.X, point.Y, zIndexHigher, xIndexLower, yIndexLower);
+        // 2. Clamp the upper neighbor to the last valid index
+        int x1 = Math.Min(x0 + 1, Data.DimSize[0] - 1);
+        int y1 = Math.Min(y0 + 1, Data.DimSize[1] - 1);
+        int z1 = Math.Min(z0 + 1, Data.DimSize[2] - 1);
 
-        return InterpolationReal(interpolatedXYLowerZ, interpolatedXYHigherZ, point.Z, zIndexLower*ZSpacing, ZSpacing);
+        // 3. Get weights (0.0 to 1.0)
+        double tx = fx - x0;
+        double ty = fy - y0;
+        double tz = fz - z0;
+
+        // 4. Direct access (Assuming VData is now a flat ushort[] for speed)
+        // If you keep the current structure, cache the slices first
+        var sliceZ0 = vData[z0];
+        var sliceZ1 = vData[z1];
+
+        // Read 8 corners
+        double c000 = sliceZ0[x0, y0];
+        double c100 = sliceZ0[x1, y0];
+        double c010 = sliceZ0[x0, y1];
+        double c110 = sliceZ0[x1, y1];
+        double c001 = sliceZ1[x0, y0];
+        double c101 = sliceZ1[x1, y0];
+        double c011 = sliceZ1[x0, y1];
+        double c111 = sliceZ1[x1, y1];
+
+        // 5. Linear interpolation (Lerp) sequence
+        // Interpolate along X
+        double c00 = c000 * (1 - tx) + c100 * tx;
+        double c01 = c001 * (1 - tx) + c101 * tx;
+        double c10 = c010 * (1 - tx) + c110 * tx;
+        double c11 = c011 * (1 - tx) + c111 * tx;
+
+        // Interpolate along Y
+        double c0 = c00 * (1 - ty) + c10 * ty;
+        double c1 = c01 * (1 - ty) + c11 * ty;
+
+        // Interpolate along Z
+        return c0 * (1 - tz) + c1 * tz;
     }
 
     /// <summary>

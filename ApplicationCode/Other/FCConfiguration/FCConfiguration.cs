@@ -53,6 +53,17 @@ public class FCConfiguration
 
                 return new FeatureComputerQuantiles(quantileValues);
             
+            case FCType.SHAPE_INDEX_FEATURE_COMPUTER:
+
+                if (!Parameters.ContainsKey("BorderPercentage") ||
+                    !Parameters.ContainsKey("Radius"))
+                    return null;
+
+                borderPercentage = Parameters["BorderPercentage"].DoubleValue;
+                radius = Parameters["Radius"].IntValue;
+
+                return new FeatureComputerShapeIndex(borderPercentage, radius);
+
             case FCType.PCA_FEATURE_COMPUTER:
                 return new FeatureComputerPCALength();
             

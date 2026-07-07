@@ -6,79 +6,87 @@ namespace Registration.ApplicationCode.FeatureNormalization;
 
 public class FeatureNormalizer
 {
-    private double[] meanValues;
-    private double[] deviationValues;
+    // private double[] meanValues;
+    // private double[] deviationValues;
+
+    private double[] meanValuesMicro;
+    private double[] meanValuesMacro;
+    
+    private double[] deviationValuesMicro;
+    private double[] deviationValuesMacro;
+    
 
     public FeatureNormalizer(List<FeatureVector> featureVectorsMicro, List<FeatureVector> featureVectorsMacro)
     {
-        this.meanValues = CalculateMeanValues(featureVectorsMicro, featureVectorsMacro);
-        this.deviationValues = CalculateDeviationValues(featureVectorsMicro, featureVectorsMacro);
+        this.meanValuesMicro = CalculateMeanValues(featureVectorsMicro);
+        this.meanValuesMacro = CalculateMeanValues(featureVectorsMacro);
+        
+        this.deviationValuesMicro = CalculateDeviationValues(featureVectorsMicro, meanValuesMicro);
+        this.deviationValuesMacro = CalculateDeviationValues(featureVectorsMacro, meanValuesMacro);
     }
 
-    private double[] CalculateMeanValues(List<FeatureVector> featureVectorsMicro, List<FeatureVector> featureVectorsMacro)
+    private double[] CalculateMeanValues(List<FeatureVector> featureVectors)
     {
-        int NUMBER_OF_FEATURES = featureVectorsMicro[0].GetNumberOfFeatures;
-        int NUMBER_OF_VECTORS = featureVectorsMicro.Count + featureVectorsMacro.Count;
+        int numberOfFeatures = featureVectors[0].GetNumberOfFeatures;
 
-        double[] meanValues = new double[NUMBER_OF_FEATURES];
+        double[] meanValues = new double[numberOfFeatures];
 
-
-        for(int i = 0; i<NUMBER_OF_FEATURES; i++)
+        for(int i = 0; i<numberOfFeatures; i++)
         {
-            double sum = 0;
-            for (int j = 0; j < featureVectorsMicro.Count; j++)
-                sum += featureVectorsMicro[j].Features[i];
-
-            for (int j = 0; j < featureVectorsMacro.Count; j++)
-                sum += featureVectorsMacro[j].Features[i];
-
-            sum /= NUMBER_OF_VECTORS;
-            meanValues[i] = sum;
+            for (int j = 0; j < featureVectors.Count; j++)
+                meanValues[i] += featureVectors[j].Features[i]/featureVectors.Count;
         }
 
         return meanValues;
     }
 
-    private double[] CalculateDeviationValues(List<FeatureVector> featureVectorsMicro, List<FeatureVector> featureVectorsMacro)
+    private double[] CalculateDeviationValues(List<FeatureVector> featureVectors, double[] meanValues)
     {
-        int NUMBER_OF_FEATURES = featureVectorsMicro[0].GetNumberOfFeatures;
-        int NUMBER_OF_VECTORS = featureVectorsMicro.Count + featureVectorsMacro.Count;
-
-        double[] meanValues = new double[NUMBER_OF_FEATURES];
-
-        for (int i = 0; i < NUMBER_OF_FEATURES; i++)
+        int numberOfFeatures = featureVectors[0].GetNumberOfFeatures;
+        
+        double[] deviationValues = new double[numberOfFeatures];
+        
+        for (int i = 0; i < numberOfFeatures; i++)
         {
             double sum = 0;
-            for (int j = 0; j < featureVectorsMicro.Count; j++)
-                sum += Math.Pow((featureVectorsMicro[j].Features[i] - meanValues[i]), 2);
-
-            for (int j = 0; j < featureVectorsMacro.Count; j++)
-                sum += Math.Pow((featureVectorsMacro[j].Features[i] - meanValues[i]), 2);
-
-
-            sum = Math.Sqrt(sum/NUMBER_OF_VECTORS);
-            meanValues[i] = sum;
+            for (int j = 0; j < featureVectors.Count; j++)
+                sum += Math.Pow(featureVectors[j].Features[i] - meanValues[i], 2);
+            
+            sum = Math.Sqrt(sum/featureVectors.Count);
+            deviationValues[i] = sum;
         }
 
-        return meanValues;
+        return deviationValues;
     }
 
-    public FeatureVector Normalize(FeatureVector featureVector)
+    public FeatureVector Normalize(FeatureVector featureVector, bool isMicro)
     {
         double[] features = new double[featureVector.GetNumberOfFeatures];
-
+        
+        double[] meanValues = isMicro ? meanValuesMicro : meanValuesMacro;  
+        double[] deviationValues = isMicro ? deviationValuesMicro : deviationValuesMacro;
+        
         for (int i = 0; i < features.Length; i++)
-            features[i] = (featureVector.Features[i] - meanValues[i]) / deviationValues[i];
+        {
+            if(deviationValues[i] == 0)
+                features[i] = 0;
+            
+            else
+                features[i] = (featureVector.Features[i] - meanValues[i]) / deviationValues[i];
+            
+            
+            
+        }
 
         return new FeatureVector(featureVector.Point, features);
     }
 
-    public List<FeatureVector> NormalizeList(List<FeatureVector> featureVectors)
+    public List<FeatureVector> NormalizeList(List<FeatureVector> featureVectors, bool isMicro)
     {
         List<FeatureVector> normalizedList = new List<FeatureVector>(featureVectors.Count);
 
         for (int i = 0; i < featureVectors.Count; i++)
-            normalizedList.Add(Normalize(featureVectors[i]));
+            normalizedList.Add(Normalize(featureVectors[i], isMicro));
 
         return normalizedList;
     }
